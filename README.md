@@ -62,8 +62,25 @@ Example
   // NOTE: the property name for the nested object failure `job.years`
 ```
 
-### Usage
+### Basic Usage
+The most common functions will be `validate` and `createType`. `createType` will let you create custom
+structures to validate data against. `primitives` will also be useful in creating these definitions.
 
+Example
+```
+  import clypse from 'clypse';
+
+  const { num, str, date } = clypse.primitives;
+
+  const UserType = clypse.createType({
+    name: str,
+    age: num,
+    birthdate: date,
+  });
+
+  // createType will return a string of the type `[object User]`
+  // which can be used through the application to refer to this type
+```
 
 ### Primitives
 Below is a list of primitives that come with Clypse and their associated
