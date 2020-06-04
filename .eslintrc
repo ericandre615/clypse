@@ -1,0 +1,20 @@
+{
+  "extends": "airbnb-base",
+  "rules": {
+    "comma-dangle": ["error", "only-multiline"],
+    "arrow-parens": ["error", "as-needed"],
+    "no-underscore-dangle": ["off"],
+    "import/no-named-as-default": [0],
+    "import/extensions": ["error", "always"],
+    "max-len": [1, 120, 2, {"ignoreComments": true}],
+    "no-unused-vars": ["error", { "varsIgnorePattern": "_" }],
+  },
+  "env": {
+    "browser": true,
+    "jest": true
+  },
+  "globals": {
+    "window": true,
+    "document": true,
+  }
+}
