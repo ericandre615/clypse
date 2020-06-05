@@ -284,10 +284,10 @@ if a value is any one of the below values.
 - `createType`: `(definition = Object, typeName = String) => String[type]`
 - `getTypeMeta`: `(type = String[type]) => Object[{ name, definition }]`
 - `typeOf`: `(type = String[type], failureHandler[Function]) => Function[(data)] => data` this function takes a custom type and an optional handler function for when the data fails validation
- - `failureHandler`: `({ message, type, value, failures }) => data`
-  - _NOTE_ the default handler will throw an error if the data does not validate against the passed in type
-  - `message` is a basic type String message explaining what type was expected and what was received
-  - `type` the custom type as a string (ie `[object User]`)
-  - `value` prop passed to this function is the original unmodified data
-  - `failures` Array, same structure as the `failures` return from the `validate` function
+  - `failureHandler`: `({ message, type, value, failures }) => data`
+    - _NOTE_ the default handler will throw an error if the data does not validate against the passed in type
+    - `message` is a basic type String message explaining what type was expected and what was received
+    - `type` the custom type as a string (ie `[object User]`)
+    - `value` prop passed to this function is the original unmodified data
+    - `failures` Array, same structure as the `failures` return from the `validate` function
 - `is*`: See above for various primitive validation functions
