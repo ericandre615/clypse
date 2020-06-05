@@ -49,6 +49,7 @@ describe('createValidator', () => {
         '[object Boolean]': { passValue: true, failValue: 'false' },
         '[object Null]': { passValue: null, failValue: undefined },
         '[object Function]': { passValue: () => ({}), failValue: `${() => ({})}` },
+        '[object Object]': { passValue: { any: 'thing' }, failValue: [] },
       };
       const primitiveValidator = createValidator();
 
@@ -80,7 +81,6 @@ describe('createValidator', () => {
 
   // TODO: still need [object Array[object String]]
   // or something like that
-
   describe('Nested custom object types', () => {
     it('should validate failures for custom types within custom types', () => {
       const nestedType = {

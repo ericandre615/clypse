@@ -6,6 +6,6 @@ const Two = typeSystem.createType({
   id: num,
   occupation: str,
   position: num
-}, { name: 'Two' });
+}, 'Two');
 
 export default Two;

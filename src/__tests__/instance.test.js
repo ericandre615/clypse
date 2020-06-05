@@ -28,7 +28,7 @@ describe('Type system instance', () => {
       firstName: str,
       lastName: str,
       created_on: date
-    }, { name: 'One' });
+    }, 'One');
 
     expect(registerDuplicateType).toThrow();
   });
@@ -39,7 +39,7 @@ describe('Type system instance', () => {
       firstName: str,
       lastName: str,
       created_on: date
-    }, { name: 'One' });
+    }, 'One');
     const expectedErrorMessage = 'Type [object One] already exists';
 
     try {

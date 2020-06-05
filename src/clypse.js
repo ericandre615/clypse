@@ -1,18 +1,15 @@
 import { primitives, typeCheckers } from './lib/primitives.js';
-import { checkType } from './lib/checkers.js';
+import { checkType, duckType } from './lib/checkers.js';
 import createValidator from './lib/create-validator.js';
 
 const {
   isPrimitive,
-  isFunction
+  isFunction,
+  isString,
+  isObject,
 } = typeCheckers;
 
-const defaultOptions = {
-  name: '',
-  deep: false
-};
-
-const types = {};
+export const types = {};
 
 const isRegisteredType = (type, regTypes) => Object.keys(regTypes)
   .some(key => (regTypes[key].type === type));
@@ -26,34 +23,37 @@ const getTypeName = type => Object.keys(types)
       : acc
   ), '');
 
-const getDefinition = type => types[type].definition;
-
-const getTypeMeta = type => types[type];
-// const validateType = types => type => {
-//   const failedChecks = Object.keys(type.definition)
-//     .reduce((acc, curr) => (
-//       !checkType(convert, actual)
-//     ));
-//
-//   return failedChecks;
-// };
-
-const createTypeOf = (registeredTypes, defaultHandler) => (
+export const getDefinition = type => types[type].definition;
+export const getTypeMeta = type => types[type];
+const createTypeOf = (registeredTypes, defaultHandler, validator) => (
   type,
-  defaultValue = undefined,
   userHandler
-) => {
-  // use this as default func value
+) => defaultValue => {
   const typeMessage = `expected type ${type} got ${defaultValue}`;
   const regMessage = `Type ${type} not registered`;
   const primitiveCheck = isPrimitive(type);
   const registeredCheck = isRegisteredType(type, registeredTypes);
   const message = ((!registeredCheck && !primitiveCheck) ? regMessage : typeMessage);
-  const handler = (handleMessage, handleType, handleDefaultValue) => (
+  const handler = handlerProps => (
     userHandler
-      ? userHandler(handleMessage, handleType, handleDefaultValue)
-      : defaultHandler(handleMessage, handleType, handleDefaultValue)
+      ? userHandler(handlerProps)
+      : defaultHandler(handlerProps)
   );
+  const [isValid, failures] = validator(type)(defaultValue);
+  const failureProps = {
+    message,
+    type,
+    value: defaultValue,
+    failures,
+  };
+
+  if (isValid) {
+    return defaultValue;
+  }
+
+  if (failures.length) {
+    return handler(failureProps);
+  }
 
   if (primitiveCheck) {
     const typeCheck = checkType(defaultValue, type);
@@ -62,7 +62,7 @@ const createTypeOf = (registeredTypes, defaultHandler) => (
       return defaultValue;
     }
 
-    return handler(message, type, defaultValue);
+    return handler(failureProps);
   }
 
   if (registeredCheck) {
@@ -73,7 +73,7 @@ const createTypeOf = (registeredTypes, defaultHandler) => (
     ));
 
     if (failedChecks && failedChecks.length > 0) {
-      return handler(message, type, defaultValue);
+      return handler(failureProps);
     }
 
     return defaultValue;
@@ -82,75 +82,91 @@ const createTypeOf = (registeredTypes, defaultHandler) => (
   return defaultValue;
 };
 
-const createIsTypeOf = registeredTypes => type => value => (
-  typeof value === registeredTypes[type].definition // eslint-disable-line valid-typeof
-);
-const createInternalType = (userType, options = defaultOptions) => {
-  const type = userType;
-  const { name } = options;
+const createInternalType = (userType, typeName) => {
+  if (!isString(typeName)) {
+    throw new TypeError(`Second argument TypeName must be a string, received ${duckType(typeName)}`);
+  }
+
   const internalType = {
-    type,
-    name,
+    type: userType,
+    name: typeName,
     custom: true,
     toString() {
-      return isPrimitive(type) ? type : `[object ${name}]`;
+      return isPrimitive(userType) ? userType : `[object ${typeName}]`;
     }
   };
 
   return internalType;
 };
 
-// const isCustomType = ({ custom }) => !!custom;
+const properCase = str => str.split(' ')
+  .map(chars => `${chars.slice(0, 1).toUpperCase()}${chars.slice(1, chars.length)}`).join(' ');
 
-const createType = (type, options = defaultOptions) => {
-  const _type = createInternalType(type, options);
+const _createType = (type, typeName, parentType, childName) => {
+  const name = typeName ? `${typeName}${childName ? properCase(childName) : ''}` : undefined;
+  const _type = createInternalType(type, name);
   const typeId = _type.toString();
-  // const isCustom = isCustomType(_type);
+  const registeredType = {
+    type: typeId,
+    definition: _type.type,
+    name: _type.name,
+  };
+
   if (types[typeId]) {
     throw new TypeError(`Type ${_type.toString()} already exists`);
   }
 
-  types[typeId] = {
-    type: typeId,
-    definition: _type.type,
-    name: _type.name
-  };
+  const returnType = parentType || registeredType;
 
-  return types[typeId].type;
+  const childObjects = Object.keys(_type.type).filter(child => isObject(_type.type[child]));
+  const hasChildObjects = !!childObjects.length;
+
+  // register to types
+  types[typeId] = registeredType;
+
+  if (!hasChildObjects) {
+    return returnType.type;
+  }
+
+  childObjects.forEach(child => {
+    const childType = returnType.definition[child];
+    returnType.definition[child] = `[object ${name}${properCase(child)}]`;
+    return _createType(childType, name, returnType, child);
+  });
+
+  return returnType.type;
 };
+
+export const createType = (typeDef, typeName) => _createType(typeDef, typeName);
 
 let onFailure;
 const registerHandler = handler => {
   onFailure = handler;
 };
 
-const handleFailure = (message, type, value) => {
+export const validate = createValidator(types);
+
+const handleFailure = ({ message, type, value, failures }) => {
   if (isFunction(onFailure)) {
-    return onFailure(message, type, value);
+    return onFailure({ message, type, value, failures });
   }
 
   throw new TypeError(message);
 };
 
-const typeOf = createTypeOf(types, handleFailure);
-const isTypeOf = createIsTypeOf(types);
-
-// TODO: should I remove? is it used? or try to make name prop configure writable
-// typeOf.name = 'typeOf';
-// isTypeOf.name = 'isTypeOf';
+export const typeOf = createTypeOf(types, handleFailure, validate);
 
 const returnTypes = {
   primitives,
   types,
   typeOf,
-  isTypeOf,
   createType,
   getDefinition,
   getTypeMeta,
   getTypeName,
   registerHandler,
   ...typeCheckers,
-  validate: createValidator(types)
+  validate,
 };
 
 export default returnTypes;
