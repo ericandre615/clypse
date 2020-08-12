@@ -90,9 +90,10 @@ describe('createValidator', () => {
       };
       const validator = createValidator(ArrayOfTypes);
       const validateArrayOfTypes = validator('[object ArrayOfTypes]');
-      const actual = validateArrayOfTypes(['this', 'is', 22]);
+      const [actualValid, actualFailures] = validateArrayOfTypes(['this', 'is', 22]);
 
-      expect(actual).toBe(true);
+      expect(actualValid).toBe(true);
+      expect(actualFailures).toEqual([]);
     });
 
     it('should fail if value is not any array', () => {
@@ -102,14 +103,33 @@ describe('createValidator', () => {
           definition: ['[object String]', '[object Number]'],
         }
       };
-      const expectedFailures = [
-        { 'some_string': { actual: '[object String]', expected: '[object Array]' } },
-      ];
       const validator = createValidator(ArrayOfTypes);
       const validateArrayOfTypes = validator('[object ArrayOfTypes]');
-      const actual = validateArrayOfTypes('some_string');
+      const [actualValid, actualFailures] = validateArrayOfTypes('some_string');
+      // TODO: should not have duplciated failures, we're getting close
+      // just not quite there. Which one is better? First has more info, but
+      // is not quite the same as the standard output of other types
+      // maybe neither is right nad it should have the Custom type instead of Primitive type
+      const expectedFailures = [
+        {
+          some_string: {
+            actual: '[object String]',
+            expected: [
+              '[object String]',
+              '[object Number]',
+            ],
+          },
+        },
+        {
+          some_string: {
+            actual: '[object String]',
+            expected: '[object Array]',
+          },
+        }
+      ];
 
-      expect(actual).toBe(true);
+      expect(actualValid).toBe(false);
+      expect(actualFailures).toEqual(expectedFailures);
     });
   });
   // or something like that

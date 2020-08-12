@@ -71,6 +71,27 @@ const createValidator = types => type => (val, failed = [], parentLabel = '') =>
       return [false, [...totalFailures, { [val]: { actual: duckType(val), expected: primitives.arr }}]];
     }
 
+    // if we don't fail we need to check each value in the array and check if they
+    // are one of the valid types this array can hold
+
+    console.log('FOREACH ARR VAL');
+    const isEveryValueValid = val.every(v => {
+      console.log('V is ', v);
+      console.log('valid types in def ', definition);
+      const isValidArrayType = definition.some(d => checkType(v, d));
+      console.log('IS V in ARR VAlid? ', isValidArrayType);
+      return isValidArrayType;
+    });
+
+    console.log('-----FINISHED is FULL ARRAY VALID? ----');
+    console.log('ARVAL ', isEveryValueValid);
+    console.log('What is toplevel isValid ', isValid);
+    console.log('And... Failures?', totalFailures);
+
+    if (isEveryValueValid) {
+      return [isEveryValueValid, []];
+    }
+
     return [isValid, totalFailures];
   }
 
