@@ -7,6 +7,6 @@ const One = typeSystem.createType({
   firstName: str,
   lastName: str,
   created_on: date
-}, { name: 'One' });
+}, 'One');
 
 export default One;

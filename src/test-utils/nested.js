@@ -9,6 +9,6 @@ const Nested = typeSystem.createType({
   title: str,
   one: One,
   two: Two,
-});
+}, 'Nested');
 
 export default Nested;

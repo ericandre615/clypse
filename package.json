@@ -1,8 +1,8 @@
 {
   "name": "clypse",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "JS runtime types and validation",
-  "main": "index.js",
+  "main": "src/clypse.js",
   "scripts": {
     "test": "jest src",
     "test:watch": "jest src --watch",

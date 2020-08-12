@@ -35,27 +35,22 @@ const {
 } = primitives;
 
 describe('TypeSystem', () => {
-  // describe('Primitives', () => {
-  //  it('should export a set of js primitive types', () => {
-  //    const expectedPrimitives = {
-  //      arr: '[object Array]',
-  //      bool: '[object Boolean]',
-  //      buffer: '[object Uint8Array]',
-  //      date: '[object Date]',
-  //      func: '[object Function]',
-  //      num: '[object Number]',
-  //      obj: '[object Object]',
-  //      str: '[object String]',
-  //      symb: '[object Symbol]',
-  //      regex: '[object RegExp]',
-  //      f32: '[object Float32Array]',
-  //    };
-
-  //    expect(primitives).toEqual(expectedPrimitives);
-  //  });
-  // });
-
   describe('createType', () => {
+    it('should require second argument name/id', () => {
+      const createTestType = () => typeSystem.createType({
+        name: str,
+        id: num,
+      });
+      const expectedErrorMessage = 'Second argument TypeName must be a string, received [object Undefined]';
+
+      expect(createTestType).toThrow();
+      try {
+        createTestType();
+      } catch ({ message }) {
+        expect(message).toBe(expectedErrorMessage);
+      }
+    });
+
     it('should create and register a new type', () => {
 
     });
@@ -70,6 +65,100 @@ describe('TypeSystem', () => {
   describe('getTypeName', () => {
     it('should return a types name', () => {
 
+    });
+  });
+
+  describe('typeOf', () => {
+    it('should return data as-is if valid of type', () => {
+      const userType = typeSystem.createType({
+        name: str,
+        id: num,
+        other: { data: str },
+      }, 'TestUserTypeOf');
+      const userValue = {
+        name: 'dude',
+        id: 10,
+        other: {
+          data: '2021',
+        },
+      };
+      const validationError = new Error('Test failed Validation');
+      const handleFailure = () => validationError;
+      const User = typeOf(userType, handleFailure);
+      const someUser = User(userValue);
+
+      expect(someUser).not.toBe(validationError);
+      expect(someUser).toEqual(userValue);
+    });
+
+    it('[default] it should throw error if data is not valid', () => {
+      const userType = typeSystem.createType({
+        name: str,
+        id: num,
+        other: { data: str },
+      }, 'TestUserTypeOfDefaultFail');
+      const userValue = {
+        name: 'dude',
+        id: 10,
+        other: {
+          data: 2021,
+        },
+      };
+      const validationError = new Error('Test failed Validation');
+      const handleFailure = () => validationError;
+      const User = typeOf(userType, handleFailure);
+      const someUser = User(userValue);
+
+      expect(someUser).toBe(validationError);
+      expect(someUser).not.toEqual(userValue);
+    });
+
+    it('should allow a user to handle failures', () => {
+      const userType = typeSystem.createType({
+        name: str,
+        id: num,
+        data: num,
+      }, 'TestUserTypeOfHandleFail');
+      const userValue = {
+        name: 'dude-fail',
+        id: '10',
+        data: 'not parsed'
+      };
+      const expectedUserValue = {
+        name: 'dude-fail',
+        id: 10,
+        data: 0
+      };
+      const handleFailure = ({ value, failures }) => {
+        const convertedFailures = failures.reduce((acc, failure) => {
+          const prop = Object.keys(failure)[0];
+          const { actual, expected } = failure[prop];
+          const propValue = value[prop];
+
+          if (actual === '[object String]' && expected === '[object Number]') {
+            const parsedValue = parseInt(propValue, 10);
+            return {
+              ...acc,
+              [prop]: Number.isNaN(parsedValue) ? 0 : parsedValue,
+            };
+          }
+
+          return {
+            ...acc,
+            [prop]: propValue,
+          };
+        }, {});
+
+        return {
+          ...value,
+          ...convertedFailures,
+        };
+      };
+      const User = typeOf(userType, handleFailure);
+      const someUser = User(userValue);
+      const [_, userFailures] = validate(userType)(userValue);
+
+      expect(someUser).toEqual(expectedUserValue);
     });
   });
 
@@ -99,7 +188,7 @@ describe('TypeSystem', () => {
       expect(actualFailures).toEqual(expectedFailures);
     });
 
-    it('should return turn true if value is strictly of type', () => {
+    it('should return true if value is strictly of type', () => {
       const validateOne = validate(One);
       const validateTwo = validate(Two);
       const testValue = {
@@ -113,6 +202,52 @@ describe('TypeSystem', () => {
 
       expect(actualValidationTwo).toBe(false);
       expect(actualValidationOne).toBe(true);
+    });
+
+    it('should validate nested types ', () => {
+      const validatorTestDataNested = createType({
+        name: str,
+        id: num,
+        start: date,
+        nesting: {
+          level: num,
+          desc: str,
+        },
+      }, 'ValidatorTestDataNested');
+
+      const testData = {
+        name: 'dude',
+        id: '12',
+        start: new Date(),
+        nesting: {
+          level: '1',
+        }
+      };
+      const expectedFailures = [
+        {
+          'nesting.level': {
+            actual: '[object String]',
+            expected: '[object Number]',
+          },
+        },
+        {
+          'nesting.desc': {
+            actual: '[object Undefined]',
+            expected: '[object String]',
+          },
+        },
+        {
+          id: {
+            actual: '[object String]',
+            expected: '[object Number]',
+          },
+        },
+      ];
+      const validateTestDataNested = validate(validatorTestDataNested);
+      const [isValid, failures] = validateTestDataNested(testData);
+
+      expect(isValid).toBe(false);
+      expect(failures).toEqual(expectedFailures);
     });
   });
 
@@ -131,56 +266,4 @@ describe('TypeSystem', () => {
       expect(definition).toEqual(expectedDefinition);
     });
   });
-
-  // describe('Primitive type checkers', () => {
-  //  const testTypes = {
-  //    isArray: [],
-  //    isBoolean: true,
-  //    isBuffer: new Uint8Array(1),
-  //    isDate: new Date(),
-  //    isFunction: () => ({}),
-  //    isNumber: 1,
-  //    isObject: {},
-  //    isString: 'string',
-  //    isSymbol: Symbol('Test Symbol'),
-  //    isRegex: /[a-zA-Z0-9]/g,
-  //    isFloat32Array: new Float32Array(),
-  //  };
-  //  const typeCheckers = {
-  //    isObject,
-  //    isArray,
-  //    isString,
-  //    isNumber,
-  //    isBoolean,
-  //    isFunction,
-  //    isBuffer,
-  //    isDate,
-  //    isSymbol,
-  //    isRegex,
-  //    isFloat32Array,
-  //  };
-
-  //  Object.keys(typeCheckers).forEach(key => {
-  //    const checker = typeCheckers[key];
-  //    const { name } = checker;
-  //    const { [name]: validType, ...otherTypes } = testTypes;
-
-  //    describe(`${name}`, () => {
-  //      it(`should return true if type ${name}`, () => {
-  //        const actualValue = checker(validType);
-
-  //        expect(actualValue).toBe(true);
-  //      });
-
-  //      it('should return false for any other types', () => {
-  //        Object.keys(otherTypes).forEach(typeKey => {
-  //          const actualValue = checker(otherTypes[typeKey]);
-
-  //          expect(actualValue).toBe(false);
-  //        });
-  //      });
-  //    });
-  //  });
-
-  // });
 });

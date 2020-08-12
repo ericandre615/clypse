@@ -7,6 +7,6 @@ const Three = typeSystem.createType({
   address: str,
   apt: num,
   zip: num
-}, { name: 'Three' });
+}, 'Three');
 
 export default Three;
