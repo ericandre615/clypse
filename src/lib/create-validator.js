@@ -2,11 +2,6 @@ import { checkType, duckType } from './checkers.js';
 import { primitives, typeCheckers } from './primitives.js';
 
 const { isPrimitive } = typeCheckers;
-
-// TODO:
-// const isValidArray = val => {
-//
-// };
 const partition = data => predicate => data.reduce(([pass, fail], curr) => (
   predicate(curr)
     ? [[...pass, curr], fail]
@@ -47,10 +42,6 @@ const createValidator = types => type => (val, failed = [], parentLabel = '') =>
         },
       }]
   ), []);
-
-  console.log('VALIDATE----- t: ', type, ' d: ', definition, ' v:', val);
-  console.log('FAILEDEFS ', failedDefinitions);
-
   const isValidPrimitive = checkType(val, definition);
   const failedPrimitive = !isValidPrimitive && [{
     [val]: {
@@ -65,28 +56,12 @@ const createValidator = types => type => (val, failed = [], parentLabel = '') =>
 
   if (hasArrayDefinition) {
     const isValueArray = checkType(val, primitives.arr);
-    console.log('First obvious is val an array? ', isValueArray);
-    console.log('FAILARR ', ...totalFailures);
+
     if (!isValueArray) {
-      return [false, [...totalFailures, { [val]: { actual: duckType(val), expected: primitives.arr }}]];
+      return [false, [...totalFailures, { [val]: { actual: duckType(val), expected: primitives.arr } }]];
     }
 
-    // if we don't fail we need to check each value in the array and check if they
-    // are one of the valid types this array can hold
-
-    console.log('FOREACH ARR VAL');
-    const isEveryValueValid = val.every(v => {
-      console.log('V is ', v);
-      console.log('valid types in def ', definition);
-      const isValidArrayType = definition.some(d => checkType(v, d));
-      console.log('IS V in ARR VAlid? ', isValidArrayType);
-      return isValidArrayType;
-    });
-
-    console.log('-----FINISHED is FULL ARRAY VALID? ----');
-    console.log('ARVAL ', isEveryValueValid);
-    console.log('What is toplevel isValid ', isValid);
-    console.log('And... Failures?', totalFailures);
+    const isEveryValueValid = val.every(v => definition.some(d => checkType(v, d)));
 
     if (isEveryValueValid) {
       return [isEveryValueValid, []];

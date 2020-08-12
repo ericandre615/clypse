@@ -59,7 +59,7 @@ describe('TypeSystem', () => {
 
     it('should allow creating ArrayOf types using [someType]', () => {
       const ArrayOfNums = createType([num, str, One], 'ArrayOfNums');
-      const expectedType = ['[object Number]', '[object String]', '[object One]']; //'[object Array([object Number])]';
+      const expectedType = ['[object Number]', '[object String]', '[object One]']; // '[object Array([object Number])]';
       const { definition } = getTypeMeta(ArrayOfNums);
 
       expect(definition).toEqual(expectedType);
@@ -72,11 +72,6 @@ describe('TypeSystem', () => {
       }), 'VariantType');
       const expectedType = [];
       const { definition } = getTypeMeta(VariantType);
-
-      console.log('--------VARIANTS-----------------');
-      console.log(' def: ', definition);
-      console.log(' VariantType ', VariantType);
-      console.log('_________________________________');
 
       expect(definition).toEqual(expectedType);
     });
@@ -203,15 +198,15 @@ describe('TypeSystem', () => {
     });
 
     it('should fail if a value is not a typeId [object Type]', () => {
-      const str = 'some random string';
-      const num = 42;
-      const obj = { name: 'some object' };
-      const arr = ['some', 'array'];
+      const strval = 'some random string';
+      const numval = 42;
+      const objval = { name: 'some object' };
+      const arrval = ['some', 'array'];
 
-      expect(isTypeId(str)).toBe(false);
-      expect(isTypeId(num)).toBe(false);
-      expect(isTypeId(obj)).toBe(false);
-      expect(isTypeId(arr)).toBe(false);
+      expect(isTypeId(strval)).toBe(false);
+      expect(isTypeId(numval)).toBe(false);
+      expect(isTypeId(objval)).toBe(false);
+      expect(isTypeId(arrval)).toBe(false);
     });
   });
 
