@@ -7,9 +7,11 @@ import typeSystem from '../clypse.js';
 
 const {
   primitives,
+  variant,
   types,
   typeOf,
   isTypeOf,
+  isTypeId,
   createType,
   getDefinition,
   getTypeMeta,
@@ -53,6 +55,30 @@ describe('TypeSystem', () => {
 
     it('should create and register a new type', () => {
 
+    });
+
+    it('should allow creating ArrayOf types using [someType]', () => {
+      const ArrayOfNums = createType([num, str, One], 'ArrayOfNums');
+      const expectedType = ['[object Number]', '[object String]', '[object One]']; //'[object Array([object Number])]';
+      const { definition } = getTypeMeta(ArrayOfNums);
+
+      expect(definition).toEqual(expectedType);
+    });
+
+    it('should allow creating variant/enum types', () => {
+      const VariantType = createType(variant({
+        name: 'NAME',
+        age: 33,
+      }), 'VariantType');
+      const expectedType = [];
+      const { definition } = getTypeMeta(VariantType);
+
+      console.log('--------VARIANTS-----------------');
+      console.log(' def: ', definition);
+      console.log(' VariantType ', VariantType);
+      console.log('_________________________________');
+
+      expect(definition).toEqual(expectedType);
     });
   });
 
@@ -159,6 +185,33 @@ describe('TypeSystem', () => {
       const [_, userFailures] = validate(userType)(userValue);
 
       expect(someUser).toEqual(expectedUserValue);
+    });
+  });
+
+  describe('isTypeId', () => {
+    it('should identify if a value is a proper typeId [object Type]', () => {
+      const rawTypeId = '[object SomeType]';
+      const createTypeId = createType({
+        id: primitives.num,
+        name: primitives.str,
+      }, 'TestId');
+      const actualRawId = isTypeId(rawTypeId);
+      const actualCreateId = isTypeId(createTypeId);
+
+      expect(actualRawId).toBe(true);
+      expect(actualCreateId).toBe(true);
+    });
+
+    it('should fail if a value is not a typeId [object Type]', () => {
+      const str = 'some random string';
+      const num = 42;
+      const obj = { name: 'some object' };
+      const arr = ['some', 'array'];
+
+      expect(isTypeId(str)).toBe(false);
+      expect(isTypeId(num)).toBe(false);
+      expect(isTypeId(obj)).toBe(false);
+      expect(isTypeId(arr)).toBe(false);
     });
   });
 

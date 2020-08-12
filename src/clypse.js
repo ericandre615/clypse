@@ -9,7 +9,7 @@ const {
   isObject,
 } = typeCheckers;
 
-export const types = {};
+export const types = {}; // single instance map of custom types
 
 const isRegisteredType = (type, regTypes) => Object.keys(regTypes)
   .some(key => (regTypes[key].type === type));
@@ -22,7 +22,8 @@ const getTypeName = type => Object.keys(types)
       ? types[key].name
       : acc
   ), '');
-
+const typeIdRegex = /\[object [a-zA-Z]{1,}\]/;
+export const isTypeId = val => isString(val) && typeIdRegex.test(val);
 export const getDefinition = type => types[type].definition;
 export const getTypeMeta = type => types[type];
 const createTypeOf = (registeredTypes, defaultHandler, validator) => (
@@ -156,10 +157,19 @@ const handleFailure = ({ message, type, value, failures }) => {
 
 export const typeOf = createTypeOf(types, handleFailure, validate);
 
+export const variant = variants => {
+  if (!checkType(variants, primitives.obj)) {
+    throw new TypeError(`Expected ${primitives.obj} received ${duckType(variants)}`);
+  }
+
+  return Object.keys(variants).map(prop => variants[prop]);
+};
+
 const returnTypes = {
   primitives,
   types,
   typeOf,
+  isTypeId,
   createType,
   getDefinition,
   getTypeMeta,
@@ -167,6 +177,7 @@ const returnTypes = {
   registerHandler,
   ...typeCheckers,
   validate,
+  variant,
 };
 
 export default returnTypes;

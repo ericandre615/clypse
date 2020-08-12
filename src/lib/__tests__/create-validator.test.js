@@ -80,6 +80,38 @@ describe('createValidator', () => {
   });
 
   // TODO: still need [object Array[object String]]
+  describe('ArrayOf(Types)', () => {
+    it('should validate an array of specific types', () => {
+      const ArrayOfTypes = {
+        '[object ArrayOfTypes]': {
+          type: '[object ArrayOfTypes]',
+          definition: ['[object String]', '[object Number]'],
+        }
+      };
+      const validator = createValidator(ArrayOfTypes);
+      const validateArrayOfTypes = validator('[object ArrayOfTypes]');
+      const actual = validateArrayOfTypes(['this', 'is', 22]);
+
+      expect(actual).toBe(true);
+    });
+
+    it('should fail if value is not any array', () => {
+      const ArrayOfTypes = {
+        '[object ArrayOfTypes]': {
+          type: '[object ArrayOfTypes]',
+          definition: ['[object String]', '[object Number]'],
+        }
+      };
+      const expectedFailures = [
+        { 'some_string': { actual: '[object String]', expected: '[object Array]' } },
+      ];
+      const validator = createValidator(ArrayOfTypes);
+      const validateArrayOfTypes = validator('[object ArrayOfTypes]');
+      const actual = validateArrayOfTypes('some_string');
+
+      expect(actual).toBe(true);
+    });
+  });
   // or something like that
   describe('Nested custom object types', () => {
     it('should validate failures for custom types within custom types', () => {

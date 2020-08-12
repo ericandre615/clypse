@@ -35,6 +35,7 @@ const isCustomDefinition = ftype => {
 const createValidator = types => type => (val, failed = [], parentLabel = '') => {
   const validTypes = createValidatorTypes(types || {});
   const { definition } = validTypes[type];
+  const hasArrayDefinition = checkType(definition, primitives.arr);
   const hasDefinition = checkType(definition, primitives.obj);
   const failedDefinitions = hasDefinition && Object.keys(definition).reduce((acc, curr) => (
     checkType(val[curr], definition[curr])
@@ -47,6 +48,9 @@ const createValidator = types => type => (val, failed = [], parentLabel = '') =>
       }]
   ), []);
 
+  console.log('VALIDATE----- t: ', type, ' d: ', definition, ' v:', val);
+  console.log('FAILEDEFS ', failedDefinitions);
+
   const isValidPrimitive = checkType(val, definition);
   const failedPrimitive = !isValidPrimitive && [{
     [val]: {
@@ -58,6 +62,17 @@ const createValidator = types => type => (val, failed = [], parentLabel = '') =>
   const failedValidations = failedDefinitions || failedPrimitive;
   const totalFailures = [...failedValidations || [], ...failed];
   const isValid = !totalFailures.length;
+
+  if (hasArrayDefinition) {
+    const isValueArray = checkType(val, primitives.arr);
+    console.log('First obvious is val an array? ', isValueArray);
+    console.log('FAILARR ', ...totalFailures);
+    if (!isValueArray) {
+      return [false, [...totalFailures, { [val]: { actual: duckType(val), expected: primitives.arr }}]];
+    }
+
+    return [isValid, totalFailures];
+  }
 
   if (failedDefinitions.length) {
     const [customs, stillFails] = partition(failedDefinitions)(def => isCustomDefinition(def));
