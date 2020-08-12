@@ -2,7 +2,10 @@
 ## Runtime Typing and Validation for Javascript
 
 Define types in one place and use them anywhere. Validate data structures against 
-custom types or primitives. 
+custom types or primitives.
+
+One of the goals is to embrace the dynamic type system of javascript with native javascript, zero dependencies, and in the context of runtime.
+The other size of this puzzle is to provide tools for developers at write/build time (possibly through custom `eslint` plugins)
 
 `Clypse` will be a single instance that holds all the custom types you register through anywhere in your app.
 If you create a type in file `a.js` you can import it into file `b.js` or any other files in your app.
@@ -265,6 +268,10 @@ if a value is any one of the below values.
 - `date` / `isDate` => '[object Date]'
 - `symb` / `isSymbol` => '[object Symbol]'
 - `regex` / `isRegex` => '[object RegExp]'
+- `map` / `isMap` => '[object Map]'
+- `weakMap` / `isWeakMap` => '[object WeakMap]'
+- `set` / `isSet` => '[object Set]'
+- `weakSet` / `isWeakSet` => '[object WeakSet]'
 - `i8` / `isInt8Array` => '[object Int8Array]'
 - `u8` / `isUint8Array` => '[object Uint8Array]'
 - `u8Clamped` / `isUint8ClampedArray` => '[object Uint8ClampedArray]'
