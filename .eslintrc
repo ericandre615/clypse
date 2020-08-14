@@ -23,5 +23,6 @@
   "globals": {
     "window": true,
     "document": true,
+    "SharedArrayBuffer": true,
   }
 }
